@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICON C-UAS Tactical Map Simulator</title>
+    <!-- Lightweight Leaflet CSS for fast rendering -->
+    <link rel="stylesheet" href="https://unpkg.com" />
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #11141a; color: #fff; }
+        #map-container { position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 1; }
+        .control-panel { position: absolute; bottom: 20px; left: 20px; z-index: 10; background: rgba(20, 26, 36, 0.9); padding: 15px; border-radius: 8px; border: 1px solid #2a364d; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .btn { background: #007acc; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; transition: 0.2s; }
+        .btn:hover { background: #005999; }
+        .btn-radar { background: #d9534f; }
+        .btn-radar:hover { background: #c9302c; }
+        .status-box { font-size: 12px; margin-top: 8px; padding: 5px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 3px solid #ffcc00; }
+        /* High-Performance Tactical Radar Interface Overlay */
+        .radar-active { background: #080c10 !important; filter: hue-rotate(40deg) saturate(1.5) !important; }
+    </style>
+</head>
+<body>
+
+    <div id="map-container"></div>
+
+    <div class="control-panel">
+        <h3>DICON Tactical C-UAS</h3>
+        <button class="btn" onclick="toggleMapType()">Toggle Map / Vector Style</button>
+        <button class="btn btn-radar" onclick="toggleRadarMode()">Toggle Radar Canvas Mode</button>
+        <div class="status-box" id="status">System Status: Scanning via GLONASS & ESP32...</div>
+    </div>
+
+    <!-- Leaflet Javascript Engine Engine Core -->
+    <script src="https://unpkg.com"></script>
+    <script>
+        // Default Center Point: Abuja, Nigeria
+        const operatorLat = 9.05785;
+        const operatorLon = 7.49508;
+
+        // Initialize Map Object
+        const map = L.map('map-container').setView([operatorLat, operatorLon], 14);
+
+        // Standard OpenStreetMap Baselayer (Loads over network for quick prototyping)
+        const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: 'DICON Tactical Mapping'
+        }).addTo(map);
+
+        // Place Operator Center Marker (Your GLONASS Stick Coordinates)
+        const operatorMarker = L.circleMarker([operatorLat, operatorLon], {
+            radius: 8, color: '#007acc', fillColor: '#00bfff', fillOpacity: 0.8
+        }).addTo(map).bindPopup('Command Base (GLONASS Anchor)').openPopup();
+
+        // 1. Plot Drone 1: FRIENDLY (Green Track)
+        const drone1 = L.marker([operatorLat + 0.003, operatorLon + 0.003]).addTo(map)
+            .bindTooltip("🟢 NGA-Army-Alpha (Whitelisted)", {permanent: true, direction: 'top'});
+
+        // 2. Plot Drone 2: TAMPERED (Orange Track)
+        const drone2 = L.marker([operatorLat - 0.004, operatorLon + 0.002]).addTo(map)
+            .bindTooltip("🔶 WARNING: TAMPERED SIGNATURE", {permanent: true, direction: 'top'});
+
+        // 3. Plot Drone 3: HOSTILE THREAT (Flashing Red Track)
+        const drone3 = L.circleMarker([operatorLat + 0.001, operatorLon - 0.005], {
+            radius: 6, color: '#ff0000', fillColor: '#ff3333', fillOpacity: 0.9
+        }).addTo(map).bindTooltip("🔴 CRITICAL ALERT: UNKNOWN UAV", {permanent: true, direction: 'top'});
+
+        // Toggle Views Logic
+        let isRadar = false;
+        function toggleRadarMode() {
+            const mapEl = document.getElementById('map-container');
+            const statusEl = document.getElementById('status');
+            isRadar = !isRadar;
+            
+            if(isRadar) {
+                mapEl.classList.add('radar-active');
+                baseLayer.remove(); // Removes underlying tiles completely for raw high-FPS radar rings
+                statusEl.innerHTML = "Radar Active: Zero-Trust Airspace Sweep Engaged.";
+                statusEl.style.borderLeftColor = "#ff0000";
+            } else {
+                mapEl.classList.remove('radar-active');
+                baseLayer.addTo(map); // Plugs map layer back in seamlessly
+                statusEl.innerHTML = "System Status: Scanning via GLONASS & ESP32...";
+                statusEl.style.borderLeftColor = "#ffcc00";
+            }
+        }
+
+        function toggleMapType() {
+            alert("Plug-and-Play Slot: Swaps current tile server URL stream out for your offline 'nigeria_tactical_base.mbtiles' local path.");
+        }
+    </script>
+</body>
+</html>
